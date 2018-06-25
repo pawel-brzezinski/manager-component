@@ -1,0 +1,23 @@
+{
+    "name": "pawel-brzezinski/manager",
+    "type": "library",
+    "description": "SmartInt Manager component which provide the classes to build various types of managers.",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "SmartInt\\Component\\Manager\\": ""
+        },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+    },
+    "require": {
+        "php": "^7.1",
+        "guzzlehttp/guzzle": "^6.3",
+        "symfony/event-dispatcher": "^3.0|^4.0",
+        "pawel-brzezinski/cache-component": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6"
+    }
+}
