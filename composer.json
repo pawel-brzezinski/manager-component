@@ -2,7 +2,6 @@
     "name": "pawel-brzezinski/manager-component",
     "type": "library",
     "description": "SmartInt Manager component which provide the classes to build various types of managers.",
-    "version": "1.0.0",
     "autoload": {
         "psr-4": {
             "SmartInt\\Component\\Manager\\": ""
