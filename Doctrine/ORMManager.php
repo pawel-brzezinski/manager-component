@@ -8,6 +8,7 @@ use Doctrine\Common\Persistence\ObjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use SmartInt\Component\Cache\CacheableInterface;
 use SmartInt\Component\Cache\ClientInterface as CacheClientInterface;
+use SmartInt\Component\Cache\Doctrine\DoctrineProviderClient;
 use SmartInt\Component\Cache\Model\Config;
 use SmartInt\Component\Cache\Resolver\CacheResolverInterface;
 use SmartInt\Component\Manager\AbstractManager;
@@ -129,11 +130,36 @@ class ORMManager extends AbstractManager implements ORMManagerInterface
         string $cacheKey = null,
         array $cacheTags = [],
         ?int $cacheLifetime = null
-    ){
+    ) {
         if (!method_exists($this, $method)) {
             throw new MethodNotExistsException($method);
         }
 
+        if ($this->cacheClient instanceof DoctrineProviderClient) {
+            return $this->fetchDataWithDoctrineProviderClientCache($method, $params, $cacheKey, $cacheTags, $cacheLifetime);
+        }
+
+        return $this->fetchDataWithNonDoctrineProviderClientCache($method, $params, $cacheKey, $cacheTags, $cacheLifetime);
+    }
+
+    /**
+     * Fetch data with usage of Doctrine Provider cache client.
+     *
+     * @param string $method
+     * @param array $params
+     * @param string|null $cacheKey
+     * @param array $cacheTags
+     * @param int|null $cacheLifetime
+     *
+     * @return mixed
+     */
+    public function fetchDataWithDoctrineProviderClientCache(
+        string $method,
+        array $params = [],
+        string $cacheKey = null,
+        array $cacheTags = [],
+        ?int $cacheLifetime = null
+    ) {
         $repository = $this->getRepository();
         // Inject repository instance.
         array_unshift($params, $repository);
@@ -157,6 +183,58 @@ class ORMManager extends AbstractManager implements ORMManagerInterface
             $event = new AfterFetchDataEvent($result, $cacheKey);
             $eventDispatcher->dispatch(AfterFetchDataEvent::NAME, $event);
         }
+
+        return $result;
+    }
+
+    /**
+     * Fetch data without usage of Doctrine Provider cache client.
+     *
+     * @param string $method
+     * @param array $params
+     * @param string|null $cacheKey
+     * @param array $cacheTags
+     * @param int|null $cacheLifetime
+     *
+     * @return mixed
+     */
+    public function fetchDataWithNonDoctrineProviderClientCache(
+        string $method,
+        array $params = [],
+        string $cacheKey = null,
+        array $cacheTags = [],
+        ?int $cacheLifetime = null
+    ) {
+        $repository = $this->getRepository();
+        // Inject repository instance.
+        array_unshift($params, $repository);
+
+        if (!$cacheKey || !$this->isCacheEnabled()) {
+            return $this->$method(...$params);
+        }
+
+        $cacheKey = $this->buildCacheKey($cacheKey);
+
+        if ($this->cacheClient->has($cacheKey)) {
+            return $this->cacheClient->get($cacheKey);
+        }
+
+        if (!empty($cacheTags)) {
+            $this->cacheClient->addTags($cacheKey, $cacheTags);
+        }
+
+        $result = $this->$method(...$params);
+
+        if (null === $result) {
+            return null;
+        }
+
+        if (null !== $eventDispatcher = $this->getEventDispatcher()) {
+            $event = new AfterFetchDataEvent($result, $cacheKey);
+            $eventDispatcher->dispatch(AfterFetchDataEvent::NAME, $event);
+        }
+
+        $this->cacheClient->set($cacheKey, $result, $cacheLifetime);
 
         return $result;
     }
