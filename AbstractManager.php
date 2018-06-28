@@ -161,9 +161,6 @@ abstract class AbstractManager implements ManagerInterface
         array $cacheTags = [],
         ?int $cacheLifetime = null
     ) {
-        if (!method_exists($this, $method)) {
-            throw new MethodNotExistsException($method);
-        }
 
         if (!$cacheKey || !$this->isCacheEnabled()) {
             return $this->$method(...$params);

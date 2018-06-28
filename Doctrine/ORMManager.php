@@ -13,7 +13,6 @@ use SmartInt\Component\Cache\Model\Config;
 use SmartInt\Component\Cache\Resolver\CacheResolverInterface;
 use SmartInt\Component\Manager\AbstractManager;
 use SmartInt\Component\Manager\Event\AfterFetchDataEvent;
-use SmartInt\Component\Manager\Exception\MethodNotExistsException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -131,10 +130,6 @@ class ORMManager extends AbstractManager implements ORMManagerInterface
         array $cacheTags = [],
         ?int $cacheLifetime = null
     ) {
-        if (!method_exists($this, $method)) {
-            throw new MethodNotExistsException($method);
-        }
-
         if ($this->cacheClient instanceof DoctrineProviderClient) {
             return $this->fetchDataWithDoctrineProviderClientCache($method, $params, $cacheKey, $cacheTags, $cacheLifetime);
         }

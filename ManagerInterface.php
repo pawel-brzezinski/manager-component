@@ -7,7 +7,6 @@ namespace SmartInt\Component\Manager;
 use Psr\Log\LoggerInterface;
 use SmartInt\Component\Cache\ClientInterface;
 use SmartInt\Component\Cache\Resolver\CacheResolverInterface;
-use SmartInt\Component\Manager\Exception\MethodNotExistsException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -119,8 +118,6 @@ interface ManagerInterface
      * @param null|int $cacheLifetime
      *
      * @return mixed
-     *
-     * @throws MethodNotExistsException
      */
     public function fetchData(
         string $method,
