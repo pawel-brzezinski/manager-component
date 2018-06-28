@@ -216,7 +216,9 @@ class ORMManager extends AbstractManager implements ORMManagerInterface
         $cacheKey = $this->buildCacheKey($cacheKey);
 
         if ($this->cacheClient->has($cacheKey)) {
-            return $this->cacheClient->get($cacheKey);
+            $result = $this->markResultAsFetchFromCache($this->cacheClient->get($cacheKey));
+
+            return $result;
         }
 
         if (!empty($cacheTags)) {

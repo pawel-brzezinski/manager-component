@@ -6,6 +6,7 @@ namespace SmartInt\Component\Manager;
 
 use Psr\Log\LoggerInterface;
 use SmartInt\Component\Cache\ClientInterface;
+use SmartInt\Component\Cache\Model\CacheableInterface;
 use SmartInt\Component\Cache\Resolver\CacheResolverInterface;
 use SmartInt\Component\Manager\Exception\MethodNotExistsException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -171,7 +172,9 @@ abstract class AbstractManager implements ManagerInterface
         $cacheKey = $this->buildCacheKey($cacheKey);
 
         if ($this->cacheClient->has($cacheKey)) {
-            return $this->cacheClient->get($cacheKey);
+            $result = $this->markResultAsFetchFromCache($this->cacheClient->get($cacheKey));
+
+            return $result;
         }
 
         $value = $this->$method(...$params);
@@ -183,5 +186,26 @@ abstract class AbstractManager implements ManagerInterface
         $this->cacheClient->set($cacheKey, $value, $cacheLifetime);
 
         return $value;
+    }
+
+    protected function markResultAsFetchFromCache($result)
+    {
+        if (is_object($result) && $result instanceof CacheableInterface) {
+            $result->setFromCache(true);
+
+            return $result;
+        }
+
+        if (!is_array($result)) {
+            return $result;
+        }
+
+        foreach ($result as $item) {
+            if ($item instanceof CacheableInterface) {
+                $item->setFromCache(true);
+            }
+        }
+
+        return $result;
     }
 }
